@@ -1,0 +1,6 @@
+.ipynb_checkpoints/
+.jupyter/lab/workspaces/
+data/
+!data/.getkeep
+work/
+!work/.getkeep

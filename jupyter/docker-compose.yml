@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  server:
+    image: jupyter/pyspark-notebook:latest
+    working_dir: /home/jovyan/work
+    command: start-notebook.sh --NotebookApp.token=""
+    environment:
+      AWS_PROFILE: ${AWS_PROFILE}
+    ports:
+      - 8888:8888
+    volumes:
+      - ${HOME}/.aws:/home/jovyan/.aws
+      - ./.jupyter:/home/jovyan/.jupyter
+      - ./work:/home/jovyan/work
+      - ./data:/home/jovyan/data
+    restart: always
