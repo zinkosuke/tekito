@@ -1,0 +1,9 @@
+version: '3.8'
+services:
+  dev:
+    image: python-local:latest
+    build:
+      context: .
+    dns: 8.8.8.8
+    volumes:
+      - .:/opt

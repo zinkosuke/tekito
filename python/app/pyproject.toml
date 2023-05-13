@@ -1,0 +1,48 @@
+[tool.poetry]
+name = ""
+version = "0.1.0"
+description = ""
+authors = ["zinkosuke <48650930+zinkosuke@users.noreply.github.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.3.0"
+flake8 = "^6.0.0"
+isort = "^5.12.0"
+mypy = "^1.3.0"
+pyproject-flake8 = "^6.0.0.post1"
+pytest = "^7.3.1"
+pytest-cov = "^4.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 79
+
+[tool.flake8]
+max-line-length = 79
+count = "true"
+statistics = "true"
+doctests = "true"
+ignore = "E501,W503,"
+
+[tool.isort]
+line_length = 79
+force_single_line = true
+
+[tool.mypy]
+files = "**/*.py"
+ignore_missing_imports = true
+cache_dir = "/tmp/.mypy_cache"
+
+[tool.pytest.ini_options]
+addopts = "--capture=sys -x --doctest-modules -v --cov=. --cov-report=html"
+cache_dir = "/tmp/.pytest_cache"
+python_files = ["tests.py", "test_*.py"]
+python_classes = "Test"
+python_functions = "test_"
+testpaths = "."
