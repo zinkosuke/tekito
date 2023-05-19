@@ -1,5 +1,5 @@
 #!/bin/bash
-# set -euxo pipefail
+set -x
 
 echo '{"test": "aaaaaaaaaaaaaa"}' > .secrets/mydag.json
 

@@ -2,8 +2,17 @@
 set -euo pipefail
 cd "$(dirname "${0}")/../"
 
-cd .secrets
+function usage() {
+    cat << EOF
+Usage: ./scripts/push_secrets.sh
 
+Digdag push secrets
+.secrets配下に {project_name}.json を準備しておく
+EOF
+    exit 1
+}
+
+cd .secrets
 for secret_file in *.json; do
     echo "Push secret '${secret_file}'"
     project=${secret_file%%.*}
