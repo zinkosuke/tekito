@@ -1,14 +1,29 @@
 #!/bin/bash
-#
-# DDLをローカルに持ってくるやつ
-#
 set -euo pipefail
-# ----- Environments -----
-TABLE_LIST=${TABLE_LIST}
-OUTPUT_LOCATION=${OUTPUT_LOCATION}
-SLEEP_SEC=${SLEEP_SEC:-5}
-# ----- Args -----
+cd "$(dirname "${0}")"
+
+function usage() {
+    cat << EOF
+Usage: ./athena_download_ddl.sh
+
+DDLをローカルに持ってくるやつ
+
+Environments:
+    TABLE_LIST      対象テーブルが書いてあるリスト
+    OUTPUT_LOCATION OutputLocation
+    SLEEP_SEC       get-query-executionのインターバル(秒) default: 5
+EOF
+    exit 1
+}
+
+required_environments=("TABLE_LIST" "OUTPUT_LOCATION")
+for i in "${required_environments[@]}"; do
+    [[ -v ${i} ]] || usage
+done
+
 # ----- Main -----
+SLEEP_SEC=${SLEEP_SEC:-5}
+
 grep -v '^#' < "${TABLE_LIST}" | while IFS= read -r table; do
     query_id=$(
         aws athena start-query-execution \
@@ -31,8 +46,8 @@ grep -v '^#' < "${TABLE_LIST}" | while IFS= read -r table; do
             SUCCEEDED)
                 sql_name="${table//\.//}.sql"
                 mkdir -p "$(dirname "${sql_name}")"
-                output_location=$(echo "${query_execution}" | jq -r '.QueryExecution.ResultConfiguration.OutputLocation')
-                aws s3 cp "${output_location}" "${sql_name}"
+                query_output=$(echo "${query_execution}" | jq -r '.QueryExecution.ResultConfiguration.OutputLocation')
+                aws s3 cp "${query_output}" "${sql_name}"
                 break
                 ;;
             *) ;;
