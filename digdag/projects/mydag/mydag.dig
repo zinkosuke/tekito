@@ -1,0 +1,14 @@
+timezone: Asia/Tokyo
+
+_export:
+  !include : shared/digs/common_env.dig
+
++test:
+  +a:
+    sh>: tasks/test.sh
+  +b:
+    sh>: shared/tasks/test.sh
+  +c:
+    sh>: echo "${secret:test}"
+  +d:
+    sh>: echo "${DT}"
