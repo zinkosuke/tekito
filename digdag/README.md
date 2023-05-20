@@ -1,7 +1,6 @@
 ## digdag
 
-TODO: web access log
-TODO: DB password
+TODO: web access log (Nginx使う)
 TODO: 認証かける?
 
 ```console

@@ -18,15 +18,15 @@ x-digdag: &digdag
     - ./shared:/home/digdag/shared
     - ./.secrets:/home/digdag/.secrets
 services:
-  web:
+  scheduler:
     <<: *digdag
-    command: "java -jar /usr/local/bin/digdag server --disable-executor-loop --disable-local-agent -c /home/digdag/config/server.conf"
+    command: "./scripts/start_digdag.sh scheduler"
     ports:
       - "65432:65432"
       - "65433:65433"
-  worker:
+  agent:
     <<: *digdag
-    command: "java -jar /usr/local/bin/digdag server -c /home/digdag/config/server.conf"
+    command: "./scripts/start_digdag.sh agent"
   minio:
     image: quay.io/minio/minio:latest
     command: "server /data --console-address :9001"

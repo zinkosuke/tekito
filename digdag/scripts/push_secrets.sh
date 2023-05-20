@@ -2,7 +2,7 @@
 set -euo pipefail
 cd "$(dirname "${0}")/../"
 
-function usage() {
+usage() {
     cat << EOF
 Usage: ./scripts/push_secrets.sh
 

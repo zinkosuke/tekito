@@ -2,7 +2,7 @@
 set -euo pipefail
 cd "$(dirname "${0}")"
 
-function usage() {
+usage() {
     cat << EOF
 Usage: ./athena_download_ddl.sh
 
@@ -21,7 +21,6 @@ for i in "${required_environments[@]}"; do
     [[ -v ${i} ]] || usage
 done
 
-# ----- Main -----
 SLEEP_SEC=${SLEEP_SEC:-5}
 
 grep -v '^#' < "${TABLE_LIST}" | while IFS= read -r table; do
