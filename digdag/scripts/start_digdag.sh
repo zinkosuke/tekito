@@ -7,8 +7,10 @@ Usage: ./scripts/start_digdag.sh COMMAND
 Digdag start server.
 
 Commands:
-    web    API server
-    worker API server, agent, workflow executor, and schedule executor
+    web       API server
+    scheduler API server, workflow executor, and schedule executor
+    agent     API server, agent
+    all       API server, agent, workflow executor, and schedule executor
 EOF
     exit 1
 }
