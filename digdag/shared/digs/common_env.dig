@@ -1,1 +1,0 @@
-DT: ${moment(session_time).subtract(1, 'days').format("YYYY-MM-DD")}

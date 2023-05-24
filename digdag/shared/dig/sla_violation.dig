@@ -1,0 +1,33 @@
++slack_notify:
+  http>: "${secret:slack.webhook_url}"
+  method: POST
+  content:
+    username: Digdag
+    icon_emoji: ":rotating_light:"
+    channel: "${secret:slack.channel}"
+    attachments:
+      - fallback: "[SLA ALERT] ${WORKFLOW_NAME}"
+        color: warning
+        mrkdwn_in:
+          - title
+          - fields
+        title: "[SLA ALERT] ${WORKFLOW_NAME}"
+        fields:
+          - title: Attempt
+            value: "${DIGDAG_HOST}/attempts/${attempt_id}"
+            short: false
+          - title: Message
+            value: "${MESSAGE}"
+            short: false
+          - title: Session Time
+            value: "${session_time}"
+            short: true
+          - title: Stage
+            value: "${STAGE}"
+            short: true
++kill:
+  if>: ${TO_BE_KILLED == "yes"}
+  _do:
+    # 動いてるタスクに対してkill(シグナル)を送るわけではない
+    # digdag kill時点で動いていたタスクが終わったらStatus=Canceledになる
+    sh>: digdag kill ${attempt_id}

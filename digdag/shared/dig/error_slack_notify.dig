@@ -1,0 +1,27 @@
++slack_notify:
+  http>: "${secret:slack.webhook_url}"
+  method: POST
+  content:
+    username: Digdag
+    icon_emoji: ":boom:"
+    channel: "${secret:slack.channel}"
+    attachments:
+      - fallback: "[FAILURE] ${WORKFLOW_NAME}"
+        color: danger
+        mrkdwn_in:
+          - title
+          - fields
+        title: "[FAILURE] ${WORKFLOW_NAME}"
+        fields:
+          - title: Attempt
+            value: "${DIGDAG_HOST}/attempts/${attempt_id}"
+            short: false
+          - title: Message
+            value: "${error.message}"
+            short: false
+          - title: Session Time
+            value: "${session_time}"
+            short: true
+          - title: Stage
+            value: "${STAGE}"
+            short: true

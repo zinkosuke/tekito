@@ -1,16 +1,37 @@
 timezone: Asia/Tokyo
+schedule:
+  hourly>: 00:00
+sla:
+  duration: 00:00:10
+  +task:
+    _export:
+      MESSAGE: SLA違反がありますた
+      TO_BE_KILLED: yes
+    !include : shared/dig/sla_violation.dig
 
 _export:
-  !include : shared/digs/common_env.dig
+  !include : shared/dig/common_env.dig
+  WORKFLOW_NAME: mydag/mydag
+  DT: ${moment(session_time).subtract(1, 'days').format("YYYY-MM-DD")}
 
-+test_in_project:
-  sh>: tasks/test.sh
++test_script:
+  sh>: |
+    task/test.sh
+    shared/task/test.sh
 
-+test_in_shared:
-  sh>: shared/tasks/test.sh
++test_env_secrets:
+  sh>: |
+    echo "secret:test=${secret:test}"
+    echo "DT=${DT}"
 
-+test_secrets:
-  sh>: echo "${secret:test}"
++test_sleep:
+  sh>: |
+    echo "sleep start"
+    sleep 30
+    echo "sleep end"
 
-+test_shared_env:
-  sh>: echo "${DT}"
++test_fail:
+  fail>: test fail
+
+_error:
+  !include : shared/dig/error_slack_notify.dig
