@@ -1,0 +1,9 @@
+version: '3.8'
+services:
+  dev:
+    image: go-local:latest
+    build:
+      context: .
+      target: dev
+    volumes:
+      - .:/opt
