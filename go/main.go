@@ -1,11 +1,17 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
+	"time"
+
+	_ "github.com/go-sql-driver/mysql"
 
 	"tekito/lib/logging"
 	"tekito/lib/utils"
+	"tekito/models"
 )
 
 type Message struct {
@@ -16,6 +22,31 @@ type Message struct {
 func (msg Message) String() string {
 	b, _ := json.Marshal(&msg)
 	return string(b)
+}
+
+func mq() {
+	db, err := sql.Open("mysql", "root:password@tcp(mysql)/mysql")
+	if err != nil {
+		panic(err)
+	}
+	db.SetConnMaxLifetime(time.Minute * 3)
+	db.SetMaxOpenConns(10)
+	db.SetMaxIdleConns(10)
+	defer db.Close()
+
+	queries := models.New(db)
+
+	ctx, stop := context.WithCancel(context.Background())
+	defer stop()
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	users, err := queries.All(ctx)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(users)
 }
 
 func main() {
@@ -53,4 +84,6 @@ LO:
 			break LO
 		}
 	}
+
+	mq()
 }

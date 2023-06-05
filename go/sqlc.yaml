@@ -1,0 +1,6 @@
+version: 2
+sql:
+  - schema: sqlc/schema/mysql.user.sql
+    queries: sqlc/queries/mysql.user.sql
+    engine: mysql
+    gen: { go: { out: models } }

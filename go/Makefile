@@ -1,19 +1,30 @@
-TARGET := ./...
-cmd_poetry := poetry run
+DIR := ./...
+CI_TARGET := ci-lint ci-vet ci-errcheck ci-sqlc
+FMT_TARGET := fmt-std fmt-tidy fmt-import
 
-.PHONY: clean ci-* test
-clean: ci-fmt ci-vet ci-goimports ci-errcheck ci-lint
-ci-fmt:
-	go fmt ${TARGET}
-ci-vet:
-	go vet ${TARGET}
+.PHONY: clean ci ci-* fmt fmt-* test test-* sqlc
+clean: ${CI_TARGET}
+
+ci: ${CI_TARGET}
 ci-lint:
-	staticcheck ${TARGET}
-ci-goimports:
-	find **/*.go -print | xargs goimports -w
-	# find **/*.go -print | xargs goimports -w -local ""
+	staticcheck ${DIR}
+ci-vet:
+	go vet ${DIR}
 ci-errcheck:
-	# errcheck ${TARGET}
-	echo
+	# errcheck ${DIR}
+ci-sqlc:
+	sqlc diff > /dev/null 2>&1
+
+fmt: ${FMT_TARGET}
+fmt-std:
+	go fmt ${DIR}
+fmt-tidy:
+	go mod tidy
+fmt-import:
+	find **/*.go -print | xargs goimports -w
+
 test:
-	go test -v ${TARGET}
+	go test -v ${DIR}
+
+sqlc:
+	sqlc generate
