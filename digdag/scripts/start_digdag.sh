@@ -15,6 +15,7 @@ EOF
     exit 1
 }
 
+# shellcheck disable=SC2317
 sigterm_handler() {
     if [[ ${pid} -ne 0 ]]; then
         kill -15 "${pid}"
