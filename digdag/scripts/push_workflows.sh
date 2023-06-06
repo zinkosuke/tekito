@@ -19,5 +19,6 @@ for project_dir in projects/*; do
     digdag push "${project}" \
         --project "${project_dir}" \
         --revision "${revision}" \
-        --copy-outgoing-symlinks
+        --copy-outgoing-symlinks \
+        --config /home/digdag/config/client.conf
 done

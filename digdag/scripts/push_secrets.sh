@@ -18,5 +18,6 @@ for secret_file in *.json; do
     project=${secret_file%%.*}
     digdag secrets \
         --project "${project}" \
-        --set "@${secret_file}"
+        --set "@${secret_file}" \
+        --config /home/digdag/config/client.conf
 done
