@@ -1,11 +1,12 @@
 timezone: Asia/Tokyo
 schedule:
   hourly>: 00:00
+
 sla:
   duration: 00:00:10
   +task:
     _export:
-      MESSAGE: SLA違反がありますた
+      MESSAGE: SLA違反がありますた!!
       TO_BE_KILLED: yes
     !include : shared/dig/sla_violation.dig
 

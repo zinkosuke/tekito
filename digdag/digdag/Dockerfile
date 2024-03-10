@@ -7,7 +7,7 @@ RUN set -eux \
  && yum install -y \
     shadow-utils \
     unzip \
- # XXX UID/GID \
+ # UID/GID... \
  && useradd -s /bin/false -m -U -u 1000 ${OWNER} \
  # digdag \
  && curl -fLsS -o /usr/local/bin/digdag \
@@ -29,12 +29,7 @@ RUN set -eux \
  && true
 
 WORKDIR /home/digdag
-
 USER ${OWNER}
 
-COPY config/ ./config/
-COPY projects/ ./projects/
-COPY scripts/ ./scripts/
-COPY shared/ ./shared/
-
-CMD ["java", "-jar", "/usr/local/bin/digdag"]
+COPY client.properties /home/digdag/.config/digdag/config
+COPY start_digdag.sh /home/digdag/start_digdag.sh

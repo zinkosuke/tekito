@@ -4,7 +4,7 @@ cd "$(dirname "${0}")/../"
 
 usage() {
     cat << EOF
-Usage: ./scripts/push_workflows.sh
+Usage: ./push_workflows.sh
 
 Digdag push workflows
 EOF
@@ -13,12 +13,11 @@ EOF
 
 revision=$(date +%Y-%m-%dT%H:%M:%S)
 
-for project_dir in projects/*; do
+for project_dir in /tmp/projects/*; do
     echo "Push project '${project_dir}'"
     project=${project_dir##*/}
     digdag push "${project}" \
         --project "${project_dir}" \
         --revision "${revision}" \
-        --copy-outgoing-symlinks \
-        --config /home/digdag/config/client.conf
+        --copy-outgoing-symlinks
 done

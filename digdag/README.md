@@ -1,8 +1,6 @@
 ## digdag
 
-TODO: web access log (Nginx使う)
-TODO: 認証かける?
-
+### 準備
 ```console
 $ mkdir -p .docker .secrets
 

@@ -4,7 +4,7 @@ cd "$(dirname "${0}")/../"
 
 usage() {
     cat << EOF
-Usage: ./scripts/push_secrets.sh
+Usage: ./push_secrets.sh
 
 Digdag push secrets
 .secrets配下に {project_name}.json を準備しておく
@@ -12,12 +12,11 @@ EOF
     exit 1
 }
 
-cd .secrets
+cd /tmp/.secrets
 for secret_file in *.json; do
     echo "Push secret '${secret_file}'"
     project=${secret_file%%.*}
     digdag secrets \
         --project "${project}" \
-        --set "@${secret_file}" \
-        --config /home/digdag/config/client.conf
+        --set "@${secret_file}"
 done
