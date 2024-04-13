@@ -1,7 +1,19 @@
 version: '3.8'
 services:
-  dev:
-    image: go-local:latest
+  alb:
+    image: traefik:v2.11
+    ports:
+      - "80:80"
+      - "8080:8080"
+    restart: always
+    volumes:
+      - ./dummy/traefik.yml:/etc/traefik/traefik.yml
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      traefik.enable: true
+      traefik.http.routers.traefik.rule: Host(`localhost`)
+  app:
+    image: go-oauth-reverse-proxy:latest
     build:
       context: .
       target: dev
@@ -10,11 +22,38 @@ services:
       CSRF_TOKEN: ${CSRF_TOKEN:-dymmy}
       OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID:-dummy}
       OAUTH_CLIENT_SECRET: ${OAUTH_CLIENT_SECRET:-dummy}
+    healthcheck:
+      test: ["CMD", "curl", "-fLsS", "http://localhost/hec4XUHvwm/ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    restart: always
     ports:
-      - "9999:9999"
+      - "9999:80"
     volumes:
       - .:/opt
+    labels:
+      traefik.enable: true
+      traefik.http.routers.app.rule: HostRegexp(`{svc:[a-z0-9]+}.localhost`)
+      traefik.http.routers.app.entrypoints: web
   app1:
     image: nginx:stable-alpine
-    ports:
-      - "8888:80"
+    restart: always
+    volumes:
+      - ./dummy/nginx.conf:/etc/nginx/nginx.conf
+      - ./dummy/app1:/usr/share/nginx/html
+    labels:
+      traefik.enable: true
+      traefik.http.routers.app1.rule: Host(`direct-app1.localhost`)
+      traefik.http.routers.app1.entrypoints: web
+  app2:
+    image: nginx:stable-alpine
+    restart: always
+    volumes:
+      - ./dummy/nginx.conf:/etc/nginx/nginx.conf
+      - ./dummy/app2:/usr/share/nginx/html
+    labels:
+      traefik.enable: true
+      traefik.http.routers.app2.rule: Host(`direct-app2.localhost`)
+      traefik.http.routers.app2.entrypoints: web
