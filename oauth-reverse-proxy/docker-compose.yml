@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  dev:
+    image: go-local:latest
+    build:
+      context: .
+      target: dev
+    command: ["air", "-c", ".air.toml"]
+    environment:
+      CSRF_TOKEN: ${CSRF_TOKEN:-dymmy}
+      OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID:-dummy}
+      OAUTH_CLIENT_SECRET: ${OAUTH_CLIENT_SECRET:-dummy}
+    ports:
+      - "9999:9999"
+    volumes:
+      - .:/opt
+  app1:
+    image: nginx:stable-alpine
+    ports:
+      - "8888:80"
