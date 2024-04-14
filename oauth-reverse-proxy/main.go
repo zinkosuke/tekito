@@ -18,6 +18,7 @@ const PATH_PREFIX = "/hec4XUHvwm"
 type App struct {
 	OAuthClientId       string   `env:"OAUTH_CLIENT_ID"`
 	OAuthClientSecret   string   `env:"OAUTH_CLIENT_SECRET"`
+	SessionTokenName    string   `env:"SESSION_TOKEN_NAME"`
 	CsrfToken           string   `env:"CSRF_TOKEN"`
 	TargetHosts         []string `env:"TARGET_HOSTS" envSeparator:":"`
 	TargetFlushInterval time.Duration
@@ -37,20 +38,17 @@ func NewApp() (*App, error) {
 	return app, nil
 }
 
-func (app *App) HealthCheck(w http.ResponseWriter, r *http.Request) {
+func (app *App) ErrorHandler(w http.ResponseWriter, req *http.Request, err error) {
+	// TODO ErrorHandler
+	slog.Error("ErrorHandler", "ctx", req.Context())
+}
+
+func (app *App) HttpHealthCheck(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("pong"))
 }
 
-func (app *App) Redirect(w http.ResponseWriter, r *http.Request) {
-	// TODO ALB配下でhttps判定
-	redirectURL := "http://" + r.Host + PATH_PREFIX + "/callback"
-	oa := auth.NewGoogleOAuth(redirectURL, app.OAuthClientId, app.OAuthClientSecret)
-	http.Redirect(w, r, oa.GetAuthCodeURL(app.CsrfToken), http.StatusFound)
-}
-
-func (app *App) Callback(w http.ResponseWriter, r *http.Request) {
-	redirectURL := "http://" + r.Host + PATH_PREFIX + "/callback"
-	oa := auth.NewGoogleOAuth(redirectURL, app.OAuthClientId, app.OAuthClientSecret)
+func (app *App) HttpCallback(w http.ResponseWriter, r *http.Request) {
+	oa := auth.NewGoogleOAuth(app.ResolveRedirectURL(r), app.OAuthClientId, app.OAuthClientSecret)
 
 	state := r.URL.Query().Get("state")
 	if state != app.CsrfToken {
@@ -67,7 +65,6 @@ func (app *App) Callback(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("BadRequest 'code'"))
 		return
 	}
-	// TODO token はどっかに保存 & cookieに直接セットしない
 
 	userInfo, err := oa.GetUserInfo(token)
 	if err != nil {
@@ -75,89 +72,82 @@ func (app *App) Callback(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("InternalServerError"))
 		return
 	}
-	slog.Info("TODO GetUserInfo: getuser", "userInfo", userInfo)
+	slog.Info("HttpCallback: Authorized.", "user", userInfo)
 
+	// TODO どっかに保存しておく
 	http.SetCookie(w, &http.Cookie{
-		Name:     "access_token",
+		Name:     app.SessionTokenName,
 		Value:    token.AccessToken,
+		Path:     "/",
+		Expires:  token.Expiry,
 		Secure:   false, // TODO
 		HttpOnly: true,
 	})
-	slog.Info("TODO expire", "x", token.Expiry)
 
-	// TODO IndexのURL覚えといてそっちに飛ばす
+	// TODO 最初のURL覚えといてそっちに飛ばす
 	http.Redirect(w, r, PATH_PREFIX+"/success", http.StatusFound)
 }
 
-func (app *App) Success(w http.ResponseWriter, r *http.Request) {
-	token, err := r.Cookie("access_token")
-	if err != nil {
-		http.Redirect(w, r, "/", http.StatusFound)
-		return
-	}
-	slog.Info("TODO token", "xxxxxxxxxxx", token)
-	w.Write([]byte("Success"))
-}
-
 func (app *App) Rewrite(r *httputil.ProxyRequest) {
-    // ALBで設定できるもの
-    // ユーザー認証を設定
-    // セッション cookie 名
-    // セッションタイムアウト
-    // スコープ
-    // 認証されていないリクエストのアクション
-    // 追加のリクエストパラメータ
-    //   ID プロバイダーのパラメータ
-	slog.Info("TODO xxxx",
-		"Host", r.In.Host,
-		"URL", r.In.URL,
-		"Proto", r.In.Proto,
-		"Header", r.In.Header,
-		"Host", r.In.Host,
-		"RemoteAddr", r.In.RemoteAddr,
-		"RequestURI", r.In.RequestURI,
-	)
+	// slog.Info("xxxx",
+	// 	"Host", r.In.Host,
+	// 	"URL", r.In.URL,
+	// 	"Proto", r.In.Proto,
+	// 	"Header", r.In.Header,
+	// 	"Host", r.In.Host,
+	// 	"RemoteAddr", r.In.RemoteAddr,
+	// 	"RequestURI", r.In.RequestURI,
+	// )
 	target, err := url.Parse("http://" + r.In.Host)
 	if err != nil {
 		panic(err)
 	}
 	r.SetURL(target)
-	r.Out.Host = r.In.Host // if desired
 	r.SetXForwarded()
 }
 
-func (app *App) ErrorHandler(w http.ResponseWriter, req *http.Request, err error) {
-	slog.Error("ErrorHandler", "ctx", req.Context())
+func (app *App) ResolveRedirectURL(r *http.Request) string {
+	// TODO https, localhost or
+	// redirectURL := "http://" + r.Host + PATH_PREFIX + "/callback"
+	redirectURL := "http://localhost:9999" + PATH_PREFIX + "/callback"
+	return redirectURL
+}
+
+func (app *App) ReverseProxyFunc(rp *httputil.ReverseProxy) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		token, err := r.Cookie(app.SessionTokenName)
+		if err != nil {
+			oa := auth.NewGoogleOAuth(app.ResolveRedirectURL(r), app.OAuthClientId, app.OAuthClientSecret)
+			http.Redirect(w, r, oa.GetAuthCodeURL(app.CsrfToken), http.StatusFound)
+			return
+		}
+		// TODO どっかに保存してある
+		slog.Info("ReverseProxyFunc: Token.", "value", token)
+		rp.ServeHTTP(w, r)
+	}
 }
 
 func main() {
-	app, err := NewApp()
-	if err != nil {
-		panic(err)
-	}
-
 	logHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		AddSource: true,
 		Level:     slog.LevelInfo,
 	})
 	slog.SetDefault(slog.New(logHandler))
 
-	// ReverseProxy
-	rp := &httputil.ReverseProxy{
+	app, err := NewApp()
+	if err != nil {
+		panic(err)
+	}
+
+	// TODO リクエストログどこで出す
+	http.HandleFunc(PATH_PREFIX+"/ping", app.HttpHealthCheck)
+	http.HandleFunc(PATH_PREFIX+"/callback", app.HttpCallback)
+	http.HandleFunc("/", app.ReverseProxyFunc(&httputil.ReverseProxy{
 		// TODO Transport
 		Rewrite:       app.Rewrite,
 		FlushInterval: app.TargetFlushInterval,
 		ErrorHandler:  app.ErrorHandler,
-	}
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		rp.ServeHTTP(w, r)
-	})
-
-	// OAuth
-	http.HandleFunc(PATH_PREFIX+"/ping", app.HealthCheck)
-	http.HandleFunc(PATH_PREFIX+"/redirect", app.Redirect)
-	http.HandleFunc(PATH_PREFIX+"/success", app.Success)
-	http.HandleFunc(PATH_PREFIX+"/callback", app.Callback)
+	}))
 
 	slog.Info("Server stated.", "listen", app.Listen)
 	err = http.ListenAndServe(app.Listen, nil)

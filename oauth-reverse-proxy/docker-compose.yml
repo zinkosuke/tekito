@@ -22,6 +22,7 @@ services:
       CSRF_TOKEN: ${CSRF_TOKEN:-dymmy}
       OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID:-dummy}
       OAUTH_CLIENT_SECRET: ${OAUTH_CLIENT_SECRET:-dummy}
+      SESSION_TOKEN_NAME: "oauth_reverse_proxy"
       TARGET_HOSTS: "app1.localhost:app2.localhost"
     healthcheck:
       test: ["CMD", "curl", "-fLsS", "http://localhost/hec4XUHvwm/ping"]
@@ -29,6 +30,8 @@ services:
       timeout: 3s
       retries: 5
       start_period: 5s
+    ports:
+      - "9999:80" # redirectURLにapp1.localhostとかは使えなかった
     restart: always
     volumes:
       - .:/opt
