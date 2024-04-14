@@ -22,6 +22,7 @@ services:
       CSRF_TOKEN: ${CSRF_TOKEN:-dymmy}
       OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID:-dummy}
       OAUTH_CLIENT_SECRET: ${OAUTH_CLIENT_SECRET:-dummy}
+      TARGET_HOSTS: "app1.localhost:app2.localhost"
     healthcheck:
       test: ["CMD", "curl", "-fLsS", "http://localhost/hec4XUHvwm/ping"]
       interval: 3s

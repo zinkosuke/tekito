@@ -6,6 +6,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/caarlos0/env/v10"
 
@@ -15,15 +16,19 @@ import (
 const PATH_PREFIX = "/hec4XUHvwm"
 
 type App struct {
-	OAuthClientId     string `env:"OAUTH_CLIENT_ID"`
-	OAuthClientSecret string `env:"OAUTH_CLIENT_SECRET"`
-	CsrfToken         string `env:"CSRF_TOKEN"`
-	Listen            string
+	OAuthClientId       string   `env:"OAUTH_CLIENT_ID"`
+	OAuthClientSecret   string   `env:"OAUTH_CLIENT_SECRET"`
+	CsrfToken           string   `env:"CSRF_TOKEN"`
+	TargetHosts         []string `env:"TARGET_HOSTS" envSeparator:":"`
+	TargetFlushInterval time.Duration
+	Listen              string
 }
 
 func NewApp() (*App, error) {
+	flushInterval, _ := time.ParseDuration("3s")
 	app := &App{
-		Listen: ":80",
+		TargetFlushInterval: flushInterval,
+		Listen:              ":80",
 	}
 	if err := env.Parse(app); err != nil {
 		slog.Error("NewApp: Application initialization failed.", err)
@@ -32,8 +37,8 @@ func NewApp() (*App, error) {
 	return app, nil
 }
 
-func (app *App) Healthcheck(w http.ResponseWriter, r *http.Request) {
-    w.Write([]byte("pong"))
+func (app *App) HealthCheck(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("pong"))
 }
 
 func (app *App) Redirect(w http.ResponseWriter, r *http.Request) {
@@ -94,6 +99,37 @@ func (app *App) Success(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Success"))
 }
 
+func (app *App) Rewrite(r *httputil.ProxyRequest) {
+    // ALBで設定できるもの
+    // ユーザー認証を設定
+    // セッション cookie 名
+    // セッションタイムアウト
+    // スコープ
+    // 認証されていないリクエストのアクション
+    // 追加のリクエストパラメータ
+    //   ID プロバイダーのパラメータ
+	slog.Info("TODO xxxx",
+		"Host", r.In.Host,
+		"URL", r.In.URL,
+		"Proto", r.In.Proto,
+		"Header", r.In.Header,
+		"Host", r.In.Host,
+		"RemoteAddr", r.In.RemoteAddr,
+		"RequestURI", r.In.RequestURI,
+	)
+	target, err := url.Parse("http://" + r.In.Host)
+	if err != nil {
+		panic(err)
+	}
+	r.SetURL(target)
+	r.Out.Host = r.In.Host // if desired
+	r.SetXForwarded()
+}
+
+func (app *App) ErrorHandler(w http.ResponseWriter, req *http.Request, err error) {
+	slog.Error("ErrorHandler", "ctx", req.Context())
+}
+
 func main() {
 	app, err := NewApp()
 	if err != nil {
@@ -108,22 +144,17 @@ func main() {
 
 	// ReverseProxy
 	rp := &httputil.ReverseProxy{
-		Rewrite: func(r *httputil.ProxyRequest) {
-			target, err := url.Parse("http://app1")
-			if err != nil {
-				panic(err)
-			}
-			r.SetURL(target)
-			r.Out.Host = r.In.Host // if desired
-		},
+		// TODO Transport
+		Rewrite:       app.Rewrite,
+		FlushInterval: app.TargetFlushInterval,
+		ErrorHandler:  app.ErrorHandler,
 	}
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("X-Ben", "Rad")
 		rp.ServeHTTP(w, r)
 	})
 
 	// OAuth
-	http.HandleFunc(PATH_PREFIX+"/ping", app.Healthcheck)
+	http.HandleFunc(PATH_PREFIX+"/ping", app.HealthCheck)
 	http.HandleFunc(PATH_PREFIX+"/redirect", app.Redirect)
 	http.HandleFunc(PATH_PREFIX+"/success", app.Success)
 	http.HandleFunc(PATH_PREFIX+"/callback", app.Callback)
