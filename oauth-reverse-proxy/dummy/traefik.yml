@@ -1,0 +1,14 @@
+log:
+  level: INFO
+
+entryPoints:
+  web:
+    address: ":80"
+
+providers:
+  docker:
+    exposedByDefault: false
+    watch: true
+
+api:
+  insecure: true
