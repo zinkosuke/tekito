@@ -1,50 +1,54 @@
 version: '3.8'
-x-digdag: &digdag
-  image: digdag-local:latest
-  build:
-    context: digdag
-  depends_on:
-    - nginx
-    - minio
-    - postgres
-  environment:
-    AWS_ACCESS_KEY_ID: root
-    AWS_SECRET_ACCESS_KEY: password
-    AWS_DEFAULT_REGION: ap-northeast-1
-    AWS_DEFAULT_OUTPUT: json
-    AWS_PAGER:
-    DB_HOST: postgres
-    DB_PORT: 5432
-    DB_USERNAME: postgres
-    DB_PASSWORD: postgres
-    DB_DATABASE: postgres
-    LOG_S3_ENDPOINT: http://minio:9000
-    LOG_S3_BUCKET: digdag-log-bucket
-    LOG_S3_PREFIX: digdag
-    DIGDAG_SECRET_KEY: bzdOMExUSWVOU3RtLzJjaQ==
-  restart: always
-  volumes:
-    # - ./digdag/start_digdag.sh:/home/digdag/start_digdag.sh
-    - ./.secrets:/tmp/.secrets
-    - ./projects:/tmp/projects
-    - ./scripts:/tmp/scripts
-    - ./shared:/tmp/shared
+x-ref:
+  digdag-base: &digdag-base
+    image: digdag-local:latest
+    build:
+      context: digdag
+    depends_on:
+      - nginx
+      - minio
+      - postgres
+    environment:
+      AWS_ACCESS_KEY_ID: root
+      AWS_SECRET_ACCESS_KEY: password
+      AWS_DEFAULT_REGION: ap-northeast-1
+      AWS_DEFAULT_OUTPUT: json
+      AWS_PAGER:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: postgres
+      LOG_S3_ENDPOINT: http://minio:9000
+      LOG_S3_BUCKET: digdag-log-bucket
+      LOG_S3_PREFIX: digdag
+      DIGDAG_SECRET_KEY: bzdOMExUSWVOU3RtLzJjaQ==
+    restart: always
+    volumes:
+      # - ./digdag/start_digdag.sh:/home/digdag/start_digdag.sh
+      - ./.secrets:/tmp/.secrets
+      - ./projects:/tmp/projects
+      - ./scripts:/tmp/scripts
+      - ./shared_dig:/tmp/shared_dig
+      - ./shared_task:/tmp/shared_task
 services:
   scheduler:
-    <<: *digdag
+    <<: [*digdag-base]
     command: ./start_digdag.sh scheduler
   agent:
-    <<: *digdag
+    <<: [*digdag-base]
     command: ./start_digdag.sh agent
   nginx:
-    image: digdag-nginx:latest
-    build:
-      args:
-        APP_HOST: scheduler:65432
-      context: nginx
+    image: nginx:stable-alpine
+    command: ash /start_nginx.sh
+    environment:
+      DIGDAG_HOST: scheduler:65432
     ports:
       - 65432:80
     restart: always
+    volumes:
+      - ./nginx/nginx.conf:/tmp/nginx.conf
+      - ./nginx/start_nginx.sh:/start_nginx.sh
   minio:
     image: quay.io/minio/minio:latest
     command: server /data --console-address :9001
