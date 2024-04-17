@@ -24,10 +24,6 @@ server.bind = 0.0.0.0
 server.port = 65432
 server.admin.bind = 0.0.0.0
 server.admin.port = 65433
-# server.access-log.path = /var/log/digdag/server
-# server.access-log.pattern = json
-server.http.io-threads = 2
-server.http.worker-threads = 16
 server.http.enable-http2 = true
 
 database.type = postgresql
@@ -52,8 +48,10 @@ archive.s3.path-style-access = true
 digdag.secret-encryption-key = ${DIGDAG_SECRET_KEY}
 EOF
     if [[ ${LOG_S3_ENDPOINT:-x} != "x" ]]; then
-        echo "log-server.s3.endpoint = ${LOG_S3_ENDPOINT}" >> "${CONFIG_PATH}"
-        echo "archive.s3.endpoint = ${LOG_S3_ENDPOINT}" >> "${CONFIG_PATH}"
+        cat << EOF >> "${CONFIG_PATH}"
+log-server.s3.endpoint = ${LOG_S3_ENDPOINT}
+archive.s3.endpoint = ${LOG_S3_ENDPOINT}
+EOF
     fi
 }
 
