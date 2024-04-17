@@ -18,7 +18,7 @@ _export:
 +test_script:
   sh>: |
     task/test.sh
-    shared_task/test.sh
+    shared_script/test.sh
 
 +test_env_secrets:
   sh>: |

@@ -23,6 +23,8 @@ x-ref:
       LOG_S3_BUCKET: digdag-log-bucket
       LOG_S3_PREFIX: digdag
       DIGDAG_SECRET_KEY: bzdOMExUSWVOU3RtLzJjaQ==
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
+      SLACK_CHANNEL: ${SLACK_CHANNEL:-}
     restart: always
     volumes:
       # - ./digdag/start_digdag.sh:/home/digdag/start_digdag.sh
@@ -30,7 +32,7 @@ x-ref:
       - ./projects:/tmp/projects
       - ./scripts:/tmp/scripts
       - ./shared_dig:/tmp/shared_dig
-      - ./shared_task:/tmp/shared_task
+      - ./shared_script:/tmp/shared_script
 services:
   scheduler:
     <<: [*digdag-base]

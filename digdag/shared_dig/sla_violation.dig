@@ -1,10 +1,10 @@
 +slack_notify:
-  http>: "${secret:slack.webhook_url}"
+  http>: "${SLACK_WEBHOOK_URL}"
   method: POST
   content:
     username: Digdag
     icon_emoji: ":rotating_light:"
-    channel: "${secret:slack.channel}"
+    channel: "${SLACK_CHANNEL}"
     attachments:
       - fallback: "[SLA ALERT] ${WORKFLOW_NAME}"
         color: warning
