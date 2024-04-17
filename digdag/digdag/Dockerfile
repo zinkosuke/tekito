@@ -1,4 +1,4 @@
-FROM amazoncorretto:11
+FROM amazoncorretto:11-al2023
 
 ARG DIGDAG_VERSION=0.10.5
 ARG OWNER=digdag

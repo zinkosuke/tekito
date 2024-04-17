@@ -11,14 +11,19 @@ sla:
     !include : shared_dig/sla_violation.dig
 
 _export:
+  py:
+    python: /usr/bin/python3
   !include : shared_dig/common_env.dig
   WORKFLOW_NAME: mydag/mydag
   DT: ${moment(session_time).subtract(1, 'days').format("YYYY-MM-DD")}
 
-+test_script:
++test_shell:
   sh>: |
     task/test.sh
     shared_script/test.sh
+
++test_python:
+  py>: task.main
 
 +test_env_secrets:
   sh>: |
